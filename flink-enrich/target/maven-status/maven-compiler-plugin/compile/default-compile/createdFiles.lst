@@ -1,0 +1,3 @@
+org/boz/DataStreamJob.class
+org/boz/function/EnrichTransaction.class
+org/boz/model/Transaction.class
