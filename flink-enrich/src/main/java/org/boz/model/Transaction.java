@@ -12,6 +12,7 @@ public class Transaction {
     private Date enrichedDate;
     private String receiver;
     private Boolean hasError;
+    private Boolean sent;
 
     public Transaction() {
         this.uuid = UUID.randomUUID();
@@ -75,6 +76,14 @@ public class Transaction {
         this.hasError = hasError;
     }
 
+    public Boolean getSent() {
+        return sent;
+    }
+
+    public void setSent(Boolean sent) {
+        this.sent = sent;
+    }
+
     @Override
     public String toString() {
         return "Transaction{" +
@@ -85,6 +94,7 @@ public class Transaction {
                 ", enrichedDate=" + enrichedDate +
                 ", receiver='" + receiver + '\'' +
                 ", hasError=" + hasError +
+                ", sent=" + sent +
                 '}';
     }
 }

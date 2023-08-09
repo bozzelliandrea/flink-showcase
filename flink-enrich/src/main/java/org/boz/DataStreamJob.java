@@ -18,11 +18,17 @@
 
 package org.boz;
 
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.connector.kafka.source.KafkaSource;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.boz.function.EnrichTransaction;
 import org.boz.model.Transaction;
 
 import java.util.Collections;
+import java.util.UUID;
 
 /**
  * Skeleton for a Flink DataStream Job.
@@ -43,9 +49,19 @@ public class DataStreamJob {
 		// to building Flink applications.
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		env.fromCollection(
-				Collections.singletonList(new Transaction("io", 32))
-		).map(new EnrichTransaction());
+		KafkaSource<String> source = KafkaSource.<String>builder()
+				.setBootstrapServers("localhost:29092")
+				.setTopics("TRANSACTION_REGISTER")
+				.setGroupId("my-group")
+				//.setStartingOffsets(OffsetsInitializer.earliest())
+				.setValueOnlyDeserializer(new SimpleStringSchema())
+				.setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
+				.build();
+
+		env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
+				.setParallelism(1)
+				.map(new EnrichTransaction())
+				.uid(UUID.randomUUID().toString());
 
 		// Execute program, beginning computation.
 		env.execute("Flink Transaction Enrich");
