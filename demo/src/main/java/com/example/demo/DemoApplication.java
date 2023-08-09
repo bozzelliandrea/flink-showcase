@@ -1,24 +1,64 @@
 package com.example.demo;
 
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootApplication
 public class DemoApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
-	}
+    public static final String TOPIC_NAME = "TRANSACTION_REGISTER";
 
-	@RestController("/health")
-	public static class Health {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+        LoggerFactory.getLogger(DemoApplication.class).info("Server Ready at: {}", "http://localhost:8080/");
+    }
 
-		@GetMapping
-		public ResponseEntity<String> get() {
-			return ResponseEntity.ok("Up and Ready");
-		}
-	}
+    @Value(value = "${spring.kafka.bootstrap-servers}")
+    private String bootstrapAddress;
+
+    @Bean
+    public ProducerFactory<String, String> producerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                bootstrapAddress);
+        configProps.put(
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class);
+        configProps.put(
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public KafkaAdmin kafkaAdmin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+        return new KafkaAdmin(configs);
+    }
+
+    @Bean
+    public NewTopic topic1() {
+        return new NewTopic(TOPIC_NAME, 1, (short) 1);
+    }
 }

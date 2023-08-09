@@ -11,6 +11,14 @@ public class Transaction implements Serializable {
         this.sent = true;
     }
 
+    public Boolean getSent() {
+        return sent;
+    }
+
+    public void setSent(Boolean sent) {
+        this.sent = sent;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -25,5 +33,14 @@ public class Transaction implements Serializable {
 
     public void setTotal(Integer total) {
         this.total = total;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "username='" + username + '\'' +
+                ", total=" + total +
+                ", sent=" + sent +
+                '}';
     }
 }
