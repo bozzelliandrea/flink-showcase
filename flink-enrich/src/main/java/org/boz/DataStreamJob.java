@@ -22,12 +22,14 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.boz.function.EnrichTransaction;
-import org.boz.model.Transaction;
+import org.boz.function.MapTransactionToJson;
 
-import java.util.Collections;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -44,26 +46,32 @@ import java.util.UUID;
  */
 public class DataStreamJob {
 
-	public static void main(String[] args) throws Exception {
-		// Sets up the execution environment, which is the main entry point
-		// to building Flink applications.
-		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    public static void main(String[] args) throws Exception {
+        // Sets up the execution environment, which is the main entry point
+        // to building Flink applications.
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        final SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyy_hhmmss");
 
-		KafkaSource<String> source = KafkaSource.<String>builder()
-				.setBootstrapServers("localhost:29092")
-				.setTopics("TRANSACTION_REGISTER")
-				.setGroupId("my-group")
-				//.setStartingOffsets(OffsetsInitializer.earliest())
-				.setValueOnlyDeserializer(new SimpleStringSchema())
-				.setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
-				.build();
+        KafkaSource<String> source = KafkaSource.<String>builder()
+                .setBootstrapServers("localhost:29092")
+                .setTopics("TRANSACTION_REGISTER")
+                .setGroupId("my-group")
+                .setValueOnlyDeserializer(new SimpleStringSchema())
+                .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST))
+                .build();
 
-		env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-				.setParallelism(1)
-				.map(new EnrichTransaction())
-				.uid(UUID.randomUUID().toString());
+        env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
+                .setParallelism(1)
+                .map(new EnrichTransaction())
+                .map(new MapTransactionToJson())
+                .uid(UUID.randomUUID().toString())
+                .writeAsText("file:///" + System.getenv("HOME")
+                        + "/Downloads/transactions_processed"
+                        + formatter.format(new Date())
+                        + ".jsonl", FileSystem.WriteMode.OVERWRITE);
 
-		// Execute program, beginning computation.
-		env.execute("Flink Transaction Enrich");
-	}
+
+        // Execute program, beginning computation.
+        env.execute("Flink Transaction Enrich");
+    }
 }

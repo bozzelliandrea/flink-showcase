@@ -1,0 +1,15 @@
+.idea/*
+.metadata
+.settings
+.project
+.mvn/wrapper/*.jar
+.mvn/maven.config
+target/
+tmp
+*.class
+*.iml
+*.swp
+*.jar
+*.log
+.DS_Store
+out/

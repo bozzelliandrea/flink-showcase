@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class Transaction {
 
-    private final UUID uuid;
+    private final String uuid;
     private String username;
     private Integer total;
     private Boolean isValid;
@@ -15,7 +15,7 @@ public class Transaction {
     private Boolean sent;
 
     public Transaction() {
-        this.uuid = UUID.randomUUID();
+        this.uuid = UUID.randomUUID().toString();
     }
 
     public Transaction(String username, Integer total) {
@@ -24,7 +24,7 @@ public class Transaction {
         this.total = total;
     }
 
-    public UUID getUuid() {
+    public String getUuid() {
         return uuid;
     }
 
