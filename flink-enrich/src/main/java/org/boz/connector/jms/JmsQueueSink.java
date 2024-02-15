@@ -40,11 +40,12 @@ public class JmsQueueSink<T extends Serializable> extends RichSinkFunction<T> {
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        final String username = parameters.getString("jms_username", null);
-        final String password = parameters.getString("jms_password", null);
+        final String username = "artemis"; //  parameters.getString("jms_username", null);
+        final String password = "artemis"; //parameters.getString("jms_password", null);
         connection = connectionFactory.createQueueConnection(username, password);
         final String clientId = parameters.getString("jms_client_id", null);
-        if (clientId != null) connection.setClientID(clientId);
+        if (clientId != null)
+            connection.setClientID(clientId);
         session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         producer = session.createSender(destination);
         destination = session.createQueue(queueName);
