@@ -18,18 +18,19 @@
 
 package org.boz;
 
+import javax.jms.QueueConnectionFactory;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.boz.connector.jms.JmsQueueSink;
 import org.boz.function.EnrichTransaction;
 import org.boz.function.MapTransactionToJson;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -60,15 +61,22 @@ public class DataStreamJob {
                 .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST))
                 .build();
 
+
+        QueueConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        JmsQueueSink<String> sink = new JmsQueueSink<>(factory, "customerQueue");
+
         env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
                 .setParallelism(1)
                 .map(new EnrichTransaction())
                 .map(new MapTransactionToJson())
                 .uid(UUID.randomUUID().toString())
+                .addSink(sink);
+                /*
                 .writeAsText("file:///" + System.getenv("HOME")
                         + "/Downloads/transactions_processed"
                         + formatter.format(new Date())
                         + ".jsonl", FileSystem.WriteMode.OVERWRITE);
+                 */
 
 
         // Execute program, beginning computation.
