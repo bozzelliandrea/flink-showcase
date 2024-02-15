@@ -18,16 +18,15 @@
 
 package org.boz;
 
-import javax.jms.QueueConnectionFactory;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.datagen.RandomGenerator;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.boz.connector.jms.JmsQueueSink;
+import org.boz.connector.jms.JmsQueueSinkBuilder;
 import org.boz.function.EnrichTransaction;
 import org.boz.function.MapTransactionToJson;
 
@@ -63,8 +62,10 @@ public class DataStreamJob {
                 .build();
 
 
-        QueueConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
-        JmsQueueSink<String> sink = new JmsQueueSink<>(factory, "customerQueue");
+        JmsQueueSink<String> sink = JmsQueueSinkBuilder.<String>builder()
+                .setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
+                .setQueueName("customerQueue")
+                .build();
 
         env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
                 .setParallelism(1)

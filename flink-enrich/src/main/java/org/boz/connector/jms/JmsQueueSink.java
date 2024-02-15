@@ -10,7 +10,8 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
 import javax.jms.Session;
-import org.apache.flink.annotation.PublicEvolving;
+
+import org.apache.flink.annotation.Experimental;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
@@ -19,8 +20,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Objects;
 
-@PublicEvolving
-public class JmsQueueSink<T extends Serializable> extends RichSinkFunction<T> {
+@Experimental
+public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsQueueSink.class);
 
@@ -33,7 +34,7 @@ public class JmsQueueSink<T extends Serializable> extends RichSinkFunction<T> {
 
     public JmsQueueSink(final QueueConnectionFactory connectionFactory, final String queueName) {
         Objects.requireNonNull(connectionFactory, "QueueConnectionFactory must not be null");
-        Objects.requireNonNull(queueName, "Queue must not be null");
+        Objects.requireNonNull(queueName, "Queue name must not be null");
         this.connectionFactory = connectionFactory;
         this.queueName = queueName;
     }
@@ -59,12 +60,8 @@ public class JmsQueueSink<T extends Serializable> extends RichSinkFunction<T> {
         connection.close();
     }
 
-    /*
-    The invoke() method is invoked for each input element.
-    and each sink implementation will handle it by publishing it to the chosen destination
-     */
     @Override
-    public void invoke(T value, Context context) throws Exception {
+    public void invoke(IN value, Context context) throws Exception {
         try {
             MessageProducer producer = session.createProducer(destination);
             ObjectMessage message = session.createObjectMessage(value);
