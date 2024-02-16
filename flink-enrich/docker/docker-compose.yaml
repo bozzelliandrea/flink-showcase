@@ -1,0 +1,13 @@
+services:
+  ibm-mq:
+    container_name: ibm-mq
+    image: ibmcom/mq
+    volumes:
+      - $HOME/ibm_mq:/mnt/mqm/data/
+    environment:
+      - LICENSE=accept
+      - MQ_QMGR_NAME=MANAGER
+      - MQ_ADMIN_PASSWORD=password
+    ports:
+      - "9443:9443"
+      - "1414:1414"

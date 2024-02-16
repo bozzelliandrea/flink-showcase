@@ -41,8 +41,8 @@ public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        final String username = "artemis"; //  parameters.getString("jms_username", null);
-        final String password = "artemis"; //parameters.getString("jms_password", null);
+        final String username = "admin"; //  parameters.getString("jms_username", null);
+        final String password = "password"; //parameters.getString("jms_password", null);
         connection = connectionFactory.createQueueConnection(username, password);
         final String clientId = parameters.getString("jms_client_id", null);
         if (clientId != null)
@@ -66,9 +66,14 @@ public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
             MessageProducer producer = session.createProducer(destination);
             ObjectMessage message = session.createObjectMessage(value);
 
+            producer.send(message);
+
+            /*
             producer.send(destination,
                     message,
                     Message.DEFAULT_DELIVERY_MODE, Message.DEFAULT_PRIORITY, Message.DEFAULT_TIME_TO_LIVE);
+
+             */
         } catch (JMSException e) {
             LOGGER.error("Error sending message to [{}]: {}", destination.getQueueName(), e.getLocalizedMessage());
             throw e;

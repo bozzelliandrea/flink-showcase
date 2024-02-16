@@ -18,6 +18,9 @@
 
 package org.boz;
 
+import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.msg.client.wmq.WMQConstants;
+import com.ibm.msg.client.wmq.common.CommonConstants;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
@@ -25,6 +28,7 @@ import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.boz.connector.ibm.IBMQueueSink;
 import org.boz.connector.jms.JmsQueueSink;
 import org.boz.connector.jms.JmsQueueSinkBuilder;
 import org.boz.function.EnrichTransaction;
@@ -62,10 +66,22 @@ public class DataStreamJob {
                 .build();
 
 
+        MQQueueConnectionFactory factory = new MQQueueConnectionFactory();
+        factory.setHostName("localhost");
+        factory.setPort(1414);
+        factory.setChannel("DEV.ADMIN.SVRCONN");
+        factory.setQueueManager("MANAGER");
+        factory.setObjectProperty( WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
+        factory.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
+
+
         JmsQueueSink<String> sink = JmsQueueSinkBuilder.<String>builder()
-                .setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
-                .setQueueName("customerQueue")
+                //.setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
+                .setFactory(factory)
+                .setQueueName("DEV.QUEUE.1")
                 .build();
+
+        //IBMQueueSink<String> sinkIbm = new IBMQueueSink();
 
         env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
                 .setParallelism(1)
