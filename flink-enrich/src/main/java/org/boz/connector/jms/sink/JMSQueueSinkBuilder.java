@@ -4,7 +4,7 @@ import javax.jms.QueueConnectionFactory;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class JMSQueueSinkBuilder<IN extends Serializable> {
+public class JMSQueueSinkBuilder<IN extends Serializable> implements Serializable {
 
     private String queueName;
     private QueueConnectionFactory factory;

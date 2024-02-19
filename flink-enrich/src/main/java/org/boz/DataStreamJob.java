@@ -33,6 +33,8 @@ import org.boz.connector.jms.sink.JMSQueueSinkBuilder;
 import org.boz.connector.jms.source.JMSQueueSourceBuilder;
 import org.boz.function.EnrichTransaction;
 import org.boz.function.MapTransactionToJson;
+import org.boz.job.KafkaEnrichToMq;
+import org.boz.job.MqToFileSystem;
 
 import java.text.SimpleDateFormat;
 import java.util.Properties;
@@ -56,42 +58,20 @@ public class DataStreamJob {
         // Sets up the execution environment, which is the main entry point
         // to building Flink applications.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        final SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyy_hhmmss");
 
-        KafkaSource<String> source = KafkaSource.<String>builder()
-                .setBootstrapServers("localhost:29092")
-                .setTopics("TRANSACTION_REGISTER")
-                .setGroupId("my-group")
-                .setValueOnlyDeserializer(new SimpleStringSchema())
-                .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST))
-                .build();
+        MqToFileSystem.build(env);
+        KafkaEnrichToMq.build(env);
 
 
-        Properties kafkaProperties = new Properties(2);
-        kafkaProperties.setProperty("bootstrap.servers", "localhost:29092");
-        kafkaProperties.setProperty("group.id", "my-group");
-        FlinkKafkaConsumer<String> consumer = new FlinkKafkaConsumer<>("TRANSACTION_REGISTER",
-                new SimpleStringSchema(),
-                kafkaProperties);
+                /*
 
-
-        MQQueueConnectionFactory ibmFactory = new MQQueueConnectionFactory();
-        ibmFactory.setHostName("localhost");
-        ibmFactory.setPort(1414);
-        ibmFactory.setChannel("DEV.ADMIN.SVRCONN");
-        ibmFactory.setQueueManager("MANAGER");
-        ibmFactory.setObjectProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
-        ibmFactory.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
-
-
-        JMSQueueSink<String> sink = JMSQueueSinkBuilder.<String>builder()
+                JMSQueueSink<String> sink = JMSQueueSinkBuilder.<String>builder()
                 //.setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
                 .setFactory(ibmFactory)
                 .setQueueName("DEV.QUEUE.1")
                 .build();
 
         env.addSource(consumer).addSink(sink);
-
 
         env.fromSource(source, WatermarkStrategy.noWatermarks(), "KafkaSource")
                 .setParallelism(1)
@@ -101,7 +81,6 @@ public class DataStreamJob {
                 .uid(UUID.randomUUID().toString())
                 .addSink(sink)
                 .name("MqSink");
-                /*
                 .writeAsText("file:///" + System.getenv("HOME")
                         + "/Downloads/transactions_processed"
                         + formatter.format(new Date())

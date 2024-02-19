@@ -4,7 +4,7 @@ import javax.jms.QueueConnectionFactory;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class JMSQueueSourceBuilder<OUT extends Serializable> {
+public class JMSQueueSourceBuilder<OUT extends Serializable> implements Serializable {
 
     private String queueName;
     private QueueConnectionFactory factory;
@@ -24,13 +24,13 @@ public class JMSQueueSourceBuilder<OUT extends Serializable> {
     }
 
     public JMSQueueSourceBuilder<OUT> setFactory(QueueConnectionFactory factory) {
-        Objects.requireNonNull(queueName, "QueueConnectionFactory must not be null");
+        Objects.requireNonNull(factory, "QueueConnectionFactory must not be null");
         this.factory = factory;
         return this;
     }
 
     public JMSQueueSourceBuilder<OUT> setDeserializer(JMSDeserializer<OUT> deserializer) {
-        Objects.requireNonNull(queueName, "Deserializer must not be null");
+        Objects.requireNonNull(deserializer, "Deserializer must not be null");
         this.deserializer = deserializer;
         return this;
     }
@@ -39,6 +39,12 @@ public class JMSQueueSourceBuilder<OUT extends Serializable> {
         if(!validator())
             throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
         return new JMSQueueSource<>(queueName, factory, deserializer);
+    }
+
+    public JMSQueueSourceFunction<OUT> buildFunction() {
+        if(!validator())
+            throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
+        return new JMSQueueSourceFunction<>(queueName, factory, deserializer);
     }
 
     private boolean validator() {

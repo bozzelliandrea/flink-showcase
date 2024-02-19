@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
@@ -72,7 +73,6 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
                     Message.DEFAULT_DELIVERY_MODE,
                     Message.DEFAULT_PRIORITY,
                     Message.DEFAULT_TIME_TO_LIVE);
-
              */
         } catch (JMSException e) {
             LOGGER.error("Error sending message to [{}]: {}", destination.getQueueName(), e.getLocalizedMessage());
