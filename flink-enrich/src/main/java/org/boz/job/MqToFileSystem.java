@@ -42,9 +42,8 @@ public class MqToFileSystem implements JobDefinition {
                 )
                 .returns(String.class)
                 .writeAsText("file:///" + System.getenv("HOME")
-                        + "/Downloads/transactions_processed"
-                        + formatter.format(new Date())
-                        + ".jsonl", FileSystem.WriteMode.OVERWRITE
+                        + "/Downloads/transactions_processed" + formatter.format(new Date()) + ".jsonl",
+                        FileSystem.WriteMode.OVERWRITE
                 )
                 .name("WriteToFileSink")
                 .uid(UUID.randomUUID().toString());
