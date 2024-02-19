@@ -1,4 +1,12 @@
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: flink-showcase-zookeeper-1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
   ibm-mq:
     container_name: ibm-mq
     image: ibmcom/mq
@@ -11,3 +19,17 @@ services:
     ports:
       - "9443:9443"
       - "1414:1414"
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: flink-showcase-kafka-1
+    hostname: kafka-broker-1
+    ports:
+      - "19092:19092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker-1:9092,PLAINTEXT_INTERNAL://localhost:19092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1

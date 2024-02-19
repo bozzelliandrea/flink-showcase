@@ -21,20 +21,21 @@ package org.boz;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 import com.ibm.msg.client.wmq.common.CommonConstants;
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import org.boz.connector.ibm.IBMQueueSink;
-import org.boz.connector.jms.JmsQueueSink;
-import org.boz.connector.jms.JmsQueueSinkBuilder;
+import org.boz.connector.jms.sink.JMSQueueSink;
+import org.boz.connector.jms.sink.JMSQueueSinkBuilder;
+import org.boz.connector.jms.source.JMSQueueSourceBuilder;
 import org.boz.function.EnrichTransaction;
 import org.boz.function.MapTransactionToJson;
 
 import java.text.SimpleDateFormat;
+import java.util.Properties;
 import java.util.UUID;
 
 /**
@@ -66,36 +67,46 @@ public class DataStreamJob {
                 .build();
 
 
-        MQQueueConnectionFactory factory = new MQQueueConnectionFactory();
-        factory.setHostName("localhost");
-        factory.setPort(1414);
-        factory.setChannel("DEV.ADMIN.SVRCONN");
-        factory.setQueueManager("MANAGER");
-        factory.setObjectProperty( WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
-        factory.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
+        Properties kafkaProperties = new Properties(2);
+        kafkaProperties.setProperty("bootstrap.servers", "localhost:29092");
+        kafkaProperties.setProperty("group.id", "my-group");
+        FlinkKafkaConsumer<String> consumer = new FlinkKafkaConsumer<>("TRANSACTION_REGISTER",
+                new SimpleStringSchema(),
+                kafkaProperties);
 
 
-        JmsQueueSink<String> sink = JmsQueueSinkBuilder.<String>builder()
+        MQQueueConnectionFactory ibmFactory = new MQQueueConnectionFactory();
+        ibmFactory.setHostName("localhost");
+        ibmFactory.setPort(1414);
+        ibmFactory.setChannel("DEV.ADMIN.SVRCONN");
+        ibmFactory.setQueueManager("MANAGER");
+        ibmFactory.setObjectProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
+        ibmFactory.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
+
+
+        JMSQueueSink<String> sink = JMSQueueSinkBuilder.<String>builder()
                 //.setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
-                .setFactory(factory)
+                .setFactory(ibmFactory)
                 .setQueueName("DEV.QUEUE.1")
                 .build();
 
-        //IBMQueueSink<String> sinkIbm = new IBMQueueSink();
+        env.addSource(consumer).addSink(sink);
 
-        env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
+
+        env.fromSource(source, WatermarkStrategy.noWatermarks(), "KafkaSource")
                 .setParallelism(1)
                 .map(new EnrichTransaction())
+                .uid(UUID.randomUUID().toString())
                 .map(new MapTransactionToJson())
                 .uid(UUID.randomUUID().toString())
-                .addSink(sink);
+                .addSink(sink)
+                .name("MqSink");
                 /*
                 .writeAsText("file:///" + System.getenv("HOME")
                         + "/Downloads/transactions_processed"
                         + formatter.format(new Date())
                         + ".jsonl", FileSystem.WriteMode.OVERWRITE);
                  */
-
 
         // Execute program, beginning computation.
         env.execute("Flink Transaction Enrich");

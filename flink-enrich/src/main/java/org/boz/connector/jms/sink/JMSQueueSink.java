@@ -1,7 +1,12 @@
-package org.boz.connector.jms;
+package org.boz.connector.jms.sink;
+
+import org.apache.flink.annotation.Experimental;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
@@ -10,20 +15,13 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
 import javax.jms.Session;
-
-import org.apache.flink.annotation.Experimental;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Serializable;
 import java.util.Objects;
 
 @Experimental
-public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> {
+public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JmsQueueSink.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JMSQueueSink.class);
 
     private final String queueName;
     private final QueueConnectionFactory connectionFactory;
@@ -32,7 +30,7 @@ public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
     private Queue destination;
     private QueueSender producer;
 
-    public JmsQueueSink(final QueueConnectionFactory connectionFactory, final String queueName) {
+    public JMSQueueSink(final QueueConnectionFactory connectionFactory, final String queueName) {
         Objects.requireNonNull(connectionFactory, "QueueConnectionFactory must not be null");
         Objects.requireNonNull(queueName, "Queue name must not be null");
         this.connectionFactory = connectionFactory;
@@ -71,7 +69,9 @@ public class JmsQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
             /*
             producer.send(destination,
                     message,
-                    Message.DEFAULT_DELIVERY_MODE, Message.DEFAULT_PRIORITY, Message.DEFAULT_TIME_TO_LIVE);
+                    Message.DEFAULT_DELIVERY_MODE,
+                    Message.DEFAULT_PRIORITY,
+                    Message.DEFAULT_TIME_TO_LIVE);
 
              */
         } catch (JMSException e) {
