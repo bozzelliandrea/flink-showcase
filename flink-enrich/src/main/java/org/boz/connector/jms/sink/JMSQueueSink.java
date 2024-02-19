@@ -78,8 +78,4 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
             throw e;
         }
     }
-
-    /*
-    protected Message convert(final T object, final Session session) throws Exception;
-    */
 }
