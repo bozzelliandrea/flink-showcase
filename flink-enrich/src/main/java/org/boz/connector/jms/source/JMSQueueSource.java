@@ -3,6 +3,7 @@ package org.boz.connector.jms.source;
 import org.apache.flink.annotation.Experimental;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,7 @@ import javax.jms.Session;
 import java.io.Serializable;
 
 @Experimental
-public class JMSQueueSource<OUT extends Serializable> extends RichParallelSourceFunction<OUT> {
+public class JMSQueueSource<OUT extends Serializable> extends RichParallelSourceFunction<OUT> implements SourceFunction<OUT> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(JMSQueueSource.class);
 

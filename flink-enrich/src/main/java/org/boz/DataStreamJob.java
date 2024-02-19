@@ -18,27 +18,9 @@
 
 package org.boz;
 
-import com.ibm.mq.jms.MQQueueConnectionFactory;
-import com.ibm.msg.client.wmq.WMQConstants;
-import com.ibm.msg.client.wmq.common.CommonConstants;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import org.boz.connector.jms.sink.JMSQueueSink;
-import org.boz.connector.jms.sink.JMSQueueSinkBuilder;
-import org.boz.connector.jms.source.JMSQueueSourceBuilder;
-import org.boz.function.EnrichTransaction;
-import org.boz.function.MapTransactionToJson;
 import org.boz.job.KafkaEnrichToMq;
 import org.boz.job.MqToFileSystem;
-
-import java.text.SimpleDateFormat;
-import java.util.Properties;
-import java.util.UUID;
 
 /**
  * Skeleton for a Flink DataStream Job.
@@ -62,32 +44,6 @@ public class DataStreamJob {
         MqToFileSystem.build(env);
         KafkaEnrichToMq.build(env);
 
-
-                /*
-
-                JMSQueueSink<String> sink = JMSQueueSinkBuilder.<String>builder()
-                //.setFactory(new ActiveMQConnectionFactory("tcp://localhost:61616"))
-                .setFactory(ibmFactory)
-                .setQueueName("DEV.QUEUE.1")
-                .build();
-
-        env.addSource(consumer).addSink(sink);
-
-        env.fromSource(source, WatermarkStrategy.noWatermarks(), "KafkaSource")
-                .setParallelism(1)
-                .map(new EnrichTransaction())
-                .uid(UUID.randomUUID().toString())
-                .map(new MapTransactionToJson())
-                .uid(UUID.randomUUID().toString())
-                .addSink(sink)
-                .name("MqSink");
-                .writeAsText("file:///" + System.getenv("HOME")
-                        + "/Downloads/transactions_processed"
-                        + formatter.format(new Date())
-                        + ".jsonl", FileSystem.WriteMode.OVERWRITE);
-                 */
-
-        // Execute program, beginning computation.
         env.execute("Flink Transaction Enrich");
     }
 }

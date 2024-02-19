@@ -37,7 +37,7 @@ public class MqToFileSystem implements JobDefinition {
                                         throw new RuntimeException(e);
                                     }
                                 })
-                                .buildFunction(),
+                                .build(),
                         "JMSQueueSource"
                 )
                 .returns(String.class)

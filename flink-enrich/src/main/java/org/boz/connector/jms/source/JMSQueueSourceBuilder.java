@@ -41,12 +41,6 @@ public class JMSQueueSourceBuilder<OUT extends Serializable> implements Serializ
         return new JMSQueueSource<>(queueName, factory, deserializer);
     }
 
-    public JMSQueueSourceFunction<OUT> buildFunction() {
-        if(!validator())
-            throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
-        return new JMSQueueSourceFunction<>(queueName, factory, deserializer);
-    }
-
     private boolean validator() {
         return factory != null && deserializer != null;
     }
