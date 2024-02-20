@@ -24,6 +24,8 @@ public class JMSQueueSource<OUT extends Serializable> extends RichParallelSource
     private final String queueName;
     private final QueueConnectionFactory connectionFactory;
     private final JMSDeserializer<OUT> deserializer;
+    private final String username;
+    private final String password;
 
     private boolean isRunning = true;
     private QueueConnection connection;
@@ -31,10 +33,16 @@ public class JMSQueueSource<OUT extends Serializable> extends RichParallelSource
     private Queue destination;
     private QueueReceiver consumer;
 
-    public JMSQueueSource(String queueName, QueueConnectionFactory connectionFactory, JMSDeserializer<OUT> deserializer) {
+    public JMSQueueSource(final String queueName,
+                          final QueueConnectionFactory connectionFactory,
+                          final JMSDeserializer<OUT> deserializer,
+                          final String username,
+                          final String password) {
         this.queueName = queueName;
         this.connectionFactory = connectionFactory;
         this.deserializer = deserializer;
+        this.username = username;
+        this.password = password;
     }
 
     @Override
@@ -46,12 +54,7 @@ public class JMSQueueSource<OUT extends Serializable> extends RichParallelSource
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        final String username = "admin"; //  parameters.getString("jms_username", null);
-        final String password = "password"; //parameters.getString("jms_password", null);
         connection = connectionFactory.createQueueConnection(username, password);
-        final String clientId = parameters.getString("jms_client_id", null);
-        if (clientId != null)
-            connection.setClientID(clientId);
         session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         destination = session.createQueue(queueName);
         consumer = session.createReceiver(destination);

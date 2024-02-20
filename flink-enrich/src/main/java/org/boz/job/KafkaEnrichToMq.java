@@ -13,10 +13,6 @@ import java.util.UUID;
 
 public class KafkaEnrichToMq implements JobDefinition {
 
-    public static void build(StreamExecutionEnvironment environment) throws JMSException {
-        new KafkaEnrichToMq().setup(environment);
-    }
-
     @Override
     public void setup(StreamExecutionEnvironment environment) throws JMSException {
         environment
@@ -33,6 +29,8 @@ public class KafkaEnrichToMq implements JobDefinition {
                 .uid(UUID.randomUUID().toString())
                 .addSink(
                         JMSQueueSinkBuilder.<String>builder()
+                                .setUsername("admin")
+                                .setPassword("password")
                                 .setFactory(IBMQueue.connectionFactory())
                                 .setQueueName("DEV.QUEUE.1") //TODO: capire errore se queue specificata
                                 .build()

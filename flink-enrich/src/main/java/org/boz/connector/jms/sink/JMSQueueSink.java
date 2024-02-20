@@ -25,27 +25,33 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
 
     private final String queueName;
     private final QueueConnectionFactory connectionFactory;
+    private final String username;
+    private final String password;
+
     private QueueConnection connection;
     private QueueSession session;
     private Queue destination;
     private QueueSender producer;
 
-    public JMSQueueSink(final QueueConnectionFactory connectionFactory, final String queueName) {
+    public JMSQueueSink(final QueueConnectionFactory connectionFactory,
+                        final String queueName,
+                        final String username,
+                        final String password) {
         Objects.requireNonNull(connectionFactory, "QueueConnectionFactory must not be null");
         Objects.requireNonNull(queueName, "Queue name must not be null");
         this.connectionFactory = connectionFactory;
         this.queueName = queueName;
+        this.username = username;
+        this.password = password;
     }
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        final String username = "admin"; //  parameters.getString("jms_username", null);
-        final String password = "password"; //parameters.getString("jms_password", null);
         connection = connectionFactory.createQueueConnection(username, password);
+        session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         final String clientId = parameters.getString("jms_client_id", null);
         if (clientId != null)
             connection.setClientID(clientId);
-        session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         producer = session.createSender(destination);
         destination = session.createQueue(queueName);
         connection.start();

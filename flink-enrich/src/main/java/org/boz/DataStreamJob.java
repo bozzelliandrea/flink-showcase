@@ -19,6 +19,7 @@
 package org.boz;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.boz.job.JobDefinition;
 import org.boz.job.KafkaEnrichToMq;
 import org.boz.job.MqToFileSystem;
 
@@ -41,8 +42,8 @@ public class DataStreamJob {
         // to building Flink applications.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        MqToFileSystem.build(env);
-        KafkaEnrichToMq.build(env);
+        JobDefinition.build(MqToFileSystem.class, env);
+        JobDefinition.build(KafkaEnrichToMq.class, env);
 
         env.execute("Flink Transaction Enrich");
     }

@@ -18,16 +18,14 @@ public class MqToFileSystem implements JobDefinition {
 
     private final SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyy_hhmmss");
 
-    public static void build(StreamExecutionEnvironment environment) throws JMSException {
-        new MqToFileSystem().setup(environment);
-    }
-
     @Override
     public void setup(StreamExecutionEnvironment environment) throws JMSException {
         environment
                 .addSource(
                         JMSQueueSourceBuilder.<String>builder()
                                 .setFactory(IBMQueue.connectionFactory())
+                                .setUsername("admin")
+                                .setPassword("password")
                                 .setQueueName("DEV.QUEUE.1")
                                 .setDeserializer(message -> {
                                     try {

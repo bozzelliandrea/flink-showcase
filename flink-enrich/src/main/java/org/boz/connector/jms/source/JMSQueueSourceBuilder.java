@@ -9,6 +9,8 @@ public class JMSQueueSourceBuilder<OUT extends Serializable> implements Serializ
     private String queueName;
     private QueueConnectionFactory factory;
     private JMSDeserializer<OUT> deserializer;
+    private String username;
+    private String password;
 
     private JMSQueueSourceBuilder() {
     }
@@ -35,13 +37,26 @@ public class JMSQueueSourceBuilder<OUT extends Serializable> implements Serializ
         return this;
     }
 
+
+    public JMSQueueSourceBuilder<OUT> setUsername(String username) {
+        Objects.requireNonNull(username, "Connection username must not be null");
+        this.username = username;
+        return this;
+    }
+
+    public JMSQueueSourceBuilder<OUT> setPassword(String password) {
+        Objects.requireNonNull(password, "Connection password must not be null");
+        this.password = password;
+        return this;
+    }
+
     public JMSQueueSource<OUT> build() {
         if(!validator())
             throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
-        return new JMSQueueSource<>(queueName, factory, deserializer);
+        return new JMSQueueSource<>(queueName, factory, deserializer, username, password);
     }
 
     private boolean validator() {
-        return factory != null && deserializer != null;
+        return factory != null && deserializer != null && username != null && password != null;
     }
 }

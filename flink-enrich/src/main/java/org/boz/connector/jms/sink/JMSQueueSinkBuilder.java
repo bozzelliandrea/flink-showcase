@@ -8,6 +8,8 @@ public class JMSQueueSinkBuilder<IN extends Serializable> implements Serializabl
 
     private String queueName;
     private QueueConnectionFactory factory;
+    private String username;
+    private String password;
 
     private JMSQueueSinkBuilder() {}
 
@@ -27,7 +29,25 @@ public class JMSQueueSinkBuilder<IN extends Serializable> implements Serializabl
         return this;
     }
 
+    public JMSQueueSinkBuilder<IN> setUsername(String username) {
+        Objects.requireNonNull(username, "Connection username must not be null");
+        this.username = username;
+        return this;
+    }
+
+    public JMSQueueSinkBuilder<IN> setPassword(String password) {
+        Objects.requireNonNull(password, "Connection password must not be null");
+        this.password = password;
+        return this;
+    }
+
     public JMSQueueSink<IN> build() {
-        return new JMSQueueSink<>(factory, queueName);
+        if(!validator())
+            throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
+        return new JMSQueueSink<>(factory, queueName, username, password);
+    }
+
+    private boolean validator() {
+        return factory != null && username != null && password != null;
     }
 }
