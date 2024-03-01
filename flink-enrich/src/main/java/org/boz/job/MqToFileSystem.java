@@ -45,7 +45,7 @@ public class MqToFileSystem implements JobDefinition {
                 .name("MapTransactionToJson")
                 .uid(UUID.randomUUID().toString())
                 .writeAsText("file:///" + System.getenv("HOME")
-                                + "/Downloads/transactions_processed" + formatter.format(new Date()) + ".jsonl",
+                                + "/Downloads/flink_output/transactions_processed" + formatter.format(new Date()) + ".jsonl",
                         FileSystem.WriteMode.OVERWRITE
                 )
                 .name("WriteToFileSink")

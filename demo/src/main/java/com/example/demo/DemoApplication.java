@@ -24,7 +24,7 @@ public class DemoApplication {
     }
 
 
-    @Scheduled(fixedDelay = 500)
+    @Scheduled(fixedDelay = 10)
     public void scheduleFixedDelayTask() throws JsonProcessingException {
         transactionManager.send(new TransactionManager
                 .Transaction(faker.name().username(), faker.number().randomDigit()),

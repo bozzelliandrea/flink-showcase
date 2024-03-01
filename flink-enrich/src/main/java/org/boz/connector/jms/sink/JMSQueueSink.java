@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.jms.CompletionListener;
 import javax.jms.JMSException;
-import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
@@ -33,7 +32,7 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
     private final String password;
     private final String clientId;
     private final JMSMessageIDExtractor<IN> messageIDExtractor;
-
+    private final long producerTimeToLive;
     private QueueConnection connection;
     private QueueSession session;
     private Queue destination;
@@ -46,7 +45,8 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
                         final String password,
                         final CompletionListener completionListener,
                         final String clientId,
-                        final JMSMessageIDExtractor<IN> messageIDExtractor) {
+                        final JMSMessageIDExtractor<IN> messageIDExtractor,
+                        final long producerTimeToLive) {
         Objects.requireNonNull(connectionFactory, "QueueConnectionFactory must not be null");
         Objects.requireNonNull(queueName, "Queue name must not be null");
         this.connectionFactory = connectionFactory;
@@ -56,6 +56,7 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
         this.messageIDExtractor = messageIDExtractor;
         this.completionListener = completionListener;
         this.clientId = clientId;
+        this.producerTimeToLive = producerTimeToLive;
     }
 
     @Override
@@ -64,6 +65,9 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
         session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         destination = session.createQueue(queueName);
         producer = session.createSender(destination);
+
+        if (producerTimeToLive > 0)
+            producer.setTimeToLive(producerTimeToLive);
 
         if (clientId != null)
             connection.setClientID(clientId);
@@ -84,10 +88,10 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
     @Override
     public void invoke(IN value, Context context) throws Exception {
         try {
-            MessageProducer producer = session.createProducer(destination);
             ObjectMessage message = session.createObjectMessage(value);
             if (messageIDExtractor != null)
                 message.setJMSMessageID(messageIDExtractor.getKey(value));
+
             producer.send(message, completionListener);
 
             /*

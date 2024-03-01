@@ -20,6 +20,7 @@ import java.io.Serializable;
 public class JMSQueueSource<OUT extends Serializable> extends RichParallelSourceFunction<OUT> implements SourceFunction<OUT> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(JMSQueueSource.class);
+    private static final long serialVersionUID = -4443280537747869174L;
 
     private final String queueName;
     private final QueueConnectionFactory connectionFactory;
