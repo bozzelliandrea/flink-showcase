@@ -1,9 +1,12 @@
 package org.boz.model;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-public class Transaction {
+public class Transaction implements Serializable {
+
+    private static final long serialVersionUID = 642925904669250081L;
 
     private final String uuid;
     private String username;

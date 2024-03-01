@@ -1,15 +1,23 @@
 package org.boz.connector.jms.sink;
 
+import org.boz.connector.jms.JMSMessageIDExtractor;
+
+import javax.jms.CompletionListener;
 import javax.jms.QueueConnectionFactory;
 import java.io.Serializable;
 import java.util.Objects;
 
 public class JMSQueueSinkBuilder<IN extends Serializable> implements Serializable {
 
+    private static final long serialVersionUID = 6495712725284644669L;
+
     private String queueName;
     private QueueConnectionFactory factory;
     private String username;
     private String password;
+    private String clientId;
+    private CompletionListener completionListener;
+    private JMSMessageIDExtractor<IN> messageIDExtractor;
 
     private JMSQueueSinkBuilder() {}
 
@@ -41,13 +49,28 @@ public class JMSQueueSinkBuilder<IN extends Serializable> implements Serializabl
         return this;
     }
 
+    public JMSQueueSinkBuilder<IN> setCompletionListener(CompletionListener completionListener) {
+        this.completionListener = completionListener;
+        return this;
+    }
+
+    public JMSQueueSinkBuilder<IN> setClientId(String clientId) {
+        this.clientId = clientId;
+        return this;
+    }
+
+    public JMSQueueSinkBuilder<IN> setMessageIDExtractor(JMSMessageIDExtractor<IN> messageIDExtractor) {
+        this.messageIDExtractor = messageIDExtractor;
+        return this;
+    }
+
     public JMSQueueSink<IN> build() {
         if(!validator())
             throw new IllegalArgumentException(this.getClass().getSimpleName() + " config is invalid!");
-        return new JMSQueueSink<>(factory, queueName, username, password);
+        return new JMSQueueSink<>(factory, queueName, username, password, completionListener, clientId, messageIDExtractor);
     }
 
     private boolean validator() {
-        return factory != null && username != null && password != null;
+        return factory != null && username != null && password != null && queueName != null;
     }
 }

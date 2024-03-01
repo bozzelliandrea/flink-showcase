@@ -6,7 +6,7 @@ import org.boz.config.IBMQueue;
 import org.boz.config.Kafka;
 import org.boz.connector.jms.sink.JMSQueueSinkBuilder;
 import org.boz.function.EnrichTransaction;
-import org.boz.function.MapTransactionToJson;
+import org.boz.model.Transaction;
 
 import javax.jms.JMSException;
 import java.util.UUID;
@@ -20,19 +20,16 @@ public class KafkaEnrichToMq implements JobDefinition {
                         Kafka.sourceFunction("TRANSACTION_REGISTER", new SimpleStringSchema()),
                         "KafkaSourceFunction"
                 )
-                .setParallelism(1)
                 .map(new EnrichTransaction())
                 .name("EnrichTransaction")
                 .uid(UUID.randomUUID().toString())
-                .map(new MapTransactionToJson())
-                .name("MapTransactionToJson")
-                .uid(UUID.randomUUID().toString())
                 .addSink(
-                        JMSQueueSinkBuilder.<String>builder()
+                        JMSQueueSinkBuilder.<Transaction>builder()
                                 .setUsername("admin")
                                 .setPassword("password")
                                 .setFactory(IBMQueue.connectionFactory())
-                                .setQueueName("DEV.QUEUE.1") //TODO: capire errore se queue specificata
+                                .setQueueName("DEV.QUEUE.1")
+                                .setMessageIDExtractor(Transaction::getUuid)
                                 .build()
                 )
                 .name("JMSQueueSink");

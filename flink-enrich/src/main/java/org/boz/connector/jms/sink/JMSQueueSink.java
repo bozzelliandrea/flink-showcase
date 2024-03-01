@@ -3,9 +3,12 @@ package org.boz.connector.jms.sink;
 import org.apache.flink.annotation.Experimental;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.boz.connector.jms.JMSMessageIDExtractor;
+import org.boz.connector.jms.JMSMetricCompletionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.CompletionListener;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -22,38 +25,52 @@ import java.util.Objects;
 public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JMSQueueSink.class);
+    private static final long serialVersionUID = -5297510692827097069L;
 
     private final String queueName;
     private final QueueConnectionFactory connectionFactory;
     private final String username;
     private final String password;
+    private final String clientId;
+    private final JMSMessageIDExtractor<IN> messageIDExtractor;
 
     private QueueConnection connection;
     private QueueSession session;
     private Queue destination;
     private QueueSender producer;
+    private CompletionListener completionListener;
 
     public JMSQueueSink(final QueueConnectionFactory connectionFactory,
                         final String queueName,
                         final String username,
-                        final String password) {
+                        final String password,
+                        final CompletionListener completionListener,
+                        final String clientId,
+                        final JMSMessageIDExtractor<IN> messageIDExtractor) {
         Objects.requireNonNull(connectionFactory, "QueueConnectionFactory must not be null");
         Objects.requireNonNull(queueName, "Queue name must not be null");
         this.connectionFactory = connectionFactory;
         this.queueName = queueName;
         this.username = username;
         this.password = password;
+        this.messageIDExtractor = messageIDExtractor;
+        this.completionListener = completionListener;
+        this.clientId = clientId;
     }
 
     @Override
     public void open(Configuration parameters) throws Exception {
         connection = connectionFactory.createQueueConnection(username, password);
         session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-        final String clientId = parameters.getString("jms_client_id", null);
+        destination = session.createQueue(queueName);
+        producer = session.createSender(destination);
+
         if (clientId != null)
             connection.setClientID(clientId);
-        producer = session.createSender(destination);
-        destination = session.createQueue(queueName);
+
+        if (completionListener == null)
+            completionListener = new JMSMetricCompletionListener(LOGGER, getRuntimeContext(), messageIDExtractor != null);
+
         connection.start();
     }
 
@@ -69,8 +86,9 @@ public class JMSQueueSink<IN extends Serializable> extends RichSinkFunction<IN> 
         try {
             MessageProducer producer = session.createProducer(destination);
             ObjectMessage message = session.createObjectMessage(value);
-
-            producer.send(message);
+            if (messageIDExtractor != null)
+                message.setJMSMessageID(messageIDExtractor.getKey(value));
+            producer.send(message, completionListener);
 
             /*
             producer.send(destination,

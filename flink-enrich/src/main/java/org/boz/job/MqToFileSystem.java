@@ -4,6 +4,8 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.boz.config.IBMQueue;
 import org.boz.connector.jms.source.JMSQueueSourceBuilder;
+import org.boz.function.MapTransactionToJson;
+import org.boz.model.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +24,14 @@ public class MqToFileSystem implements JobDefinition {
     public void setup(StreamExecutionEnvironment environment) throws JMSException {
         environment
                 .addSource(
-                        JMSQueueSourceBuilder.<String>builder()
+                        JMSQueueSourceBuilder.<Transaction>builder()
                                 .setFactory(IBMQueue.connectionFactory())
                                 .setUsername("admin")
                                 .setPassword("password")
                                 .setQueueName("DEV.QUEUE.1")
                                 .setDeserializer(message -> {
                                     try {
-                                        return message.getBody(String.class);
+                                        return message.getBody(Transaction.class);
                                     } catch (JMSException e) {
                                         LOGGER.error("Deserialization failed!", e);
                                         throw new RuntimeException(e);
@@ -38,9 +40,12 @@ public class MqToFileSystem implements JobDefinition {
                                 .build(),
                         "JMSQueueSource"
                 )
-                .returns(String.class)
+                .returns(Transaction.class)
+                .map(new MapTransactionToJson())
+                .name("MapTransactionToJson")
+                .uid(UUID.randomUUID().toString())
                 .writeAsText("file:///" + System.getenv("HOME")
-                        + "/Downloads/transactions_processed" + formatter.format(new Date()) + ".jsonl",
+                                + "/Downloads/transactions_processed" + formatter.format(new Date()) + ".jsonl",
                         FileSystem.WriteMode.OVERWRITE
                 )
                 .name("WriteToFileSink")
