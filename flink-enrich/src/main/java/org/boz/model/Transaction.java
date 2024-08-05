@@ -2,13 +2,12 @@ package org.boz.model;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.UUID;
 
 public class Transaction implements Serializable {
 
     private static final long serialVersionUID = 642925904669250081L;
 
-    private final String uuid;
+    private String id;
     private String username;
     private Integer total;
     private Boolean isValid;
@@ -18,17 +17,19 @@ public class Transaction implements Serializable {
     private Boolean sent;
 
     public Transaction() {
-        this.uuid = UUID.randomUUID().toString();
     }
 
     public Transaction(String username, Integer total) {
-        this();
         this.username = username;
         this.total = total;
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getUsername() {
@@ -90,7 +91,7 @@ public class Transaction implements Serializable {
     @Override
     public String toString() {
         return "Transaction{" +
-                "uuid=" + uuid +
+                "uuid=" + id +
                 ", username='" + username + '\'' +
                 ", total=" + total +
                 ", isValid=" + isValid +

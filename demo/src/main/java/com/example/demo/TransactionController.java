@@ -17,6 +17,6 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<TransactionManager.Transaction> post(@RequestBody TransactionManager.Transaction request) throws JsonProcessingException {
-        return ResponseEntity.ok(transactionManager.send(request, "API"));
+        return ResponseEntity.ok(transactionManager.send(request, 0, "API"));
     }
 }

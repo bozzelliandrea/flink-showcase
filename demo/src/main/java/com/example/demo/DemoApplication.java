@@ -25,10 +25,37 @@ public class DemoApplication {
 
 
     @Scheduled(fixedDelay = 10)
-    public void scheduleFixedDelayTask() throws JsonProcessingException {
+    public void scheduleFixedDelayTask_0() throws JsonProcessingException {
         transactionManager.send(new TransactionManager
                 .Transaction(faker.name().username(), faker.number().randomDigit()),
+                0,
                 "SCHEDULED_JOB");
     }
 
+
+    @Scheduled(fixedDelay = 10)
+    public void scheduleFixedDelayTask_1() throws JsonProcessingException {
+        transactionManager.send(new TransactionManager
+                .Transaction(faker.name().username(), faker.number().randomDigit()),
+                1,
+                "SCHEDULED_JOB");
+    }
+
+
+    @Scheduled(fixedDelay = 10)
+    public void scheduleFixedDelayTask_2() throws JsonProcessingException {
+        transactionManager.send(new TransactionManager
+                .Transaction(faker.name().username(), faker.number().randomDigit()),
+                2,
+                "SCHEDULED_JOB");
+    }
+
+
+    @Scheduled(fixedDelay = 10)
+    public void scheduleFixedDelayTask_3() throws JsonProcessingException {
+        transactionManager.send(new TransactionManager
+                .Transaction(faker.name().username(), faker.number().randomDigit()),
+                3,
+                "SCHEDULED_JOB");
+    }
 }

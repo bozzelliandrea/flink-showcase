@@ -29,7 +29,7 @@ public class KafkaEnrichToMq implements JobDefinition {
                                 .setPassword("password")
                                 .setFactory(IBMQueue.connectionFactory())
                                 .setQueueName("DEV.QUEUE.1")
-                                .setMessageIDExtractor(Transaction::getUuid)
+                                .setMessageIDExtractor(Transaction::getId)
                                 .build()
                 )
                 .name("JMSQueueSink");

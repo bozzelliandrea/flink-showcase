@@ -15,6 +15,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import static com.example.demo.KafkaConfig.TOPIC_NAME;
 
@@ -27,10 +28,10 @@ public class TransactionManager {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    public Transaction send(@NonNull Transaction request, @NonNull String source) throws JsonProcessingException {
+    public Transaction send(@NonNull Transaction request, Integer partition, @NonNull String source) throws JsonProcessingException {
         logger.info("Request received: {}", request.toString());
 
-        ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_NAME, mapper.writeValueAsString(request));
+        ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_NAME, partition, request.getId(), mapper.writeValueAsString(request));
         record.headers().add("Source", source.getBytes(StandardCharsets.UTF_8));
 
         ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(record);
@@ -54,6 +55,7 @@ public class TransactionManager {
         private String username;
         private Integer total;
         private Boolean sent;
+        private final String id = UUID.randomUUID().toString();
 
         public Transaction() {
         }
@@ -65,6 +67,10 @@ public class TransactionManager {
 
         public void sent() {
             this.sent = true;
+        }
+
+        public String getId() {
+            return this.id;
         }
 
         public Boolean getSent() {
